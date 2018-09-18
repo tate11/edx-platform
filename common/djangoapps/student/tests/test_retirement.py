@@ -241,7 +241,7 @@ class TestRegisterRetiredUsername(TestCase):
     # The returned message here varies depending on whether a ValidationError -or-
     # an AccountValidationError occurs.
     INVALID_ACCT_ERR_MSG = ('An account with the Public Username', 'already exists.')
-    INVALID_ERR_MSG = ('It looks like', 'belongs to an existing account. Try again with a different username.')
+    INVALID_ERR_MSG = ('It looks like', 'was already registered. Try again with a different username.')
 
     def setUp(self):
         super(TestRegisterRetiredUsername, self).setUp()
@@ -255,7 +255,13 @@ class TestRegisterRetiredUsername(TestCase):
             'honor_code': 'true',
         }
 
-    def _validate_exiting_username_response(self, orig_username, response, start_msg=INVALID_ACCT_ERR_MSG[0], end_msg=INVALID_ACCT_ERR_MSG[1]):
+    def _validate_exiting_username_response(
+            self,
+            orig_username,
+            response,
+            start_msg=INVALID_ACCT_ERR_MSG[0],
+            end_msg=INVALID_ACCT_ERR_MSG[1]
+    ):
         """
         Validates a response stating that a username already exists -or- is invalid.
         """
@@ -263,6 +269,7 @@ class TestRegisterRetiredUsername(TestCase):
         obj = json.loads(response.content)
 
         username_msg = obj['username'][0]['user_message']
+
         assert username_msg.startswith(start_msg)
         assert username_msg.endswith(end_msg)
         assert orig_username in username_msg
