@@ -494,17 +494,18 @@ class ProgramDataExtender(object):
             for course_run in course['course_runs']:
                 # State to be shared across handlers.
                 self.course_run_key = CourseKey.from_string(course_run['key'])
-                
+
                 # Some (old) course runs may exist for a program which do not exist in LMS. In that case,
                 # continue without the course run.
                 try:
                     self.course_overview = CourseOverview.get_from_id(self.course_run_key)
                 except CourseOverview.DoesNotExist:
-                    log.warning('Failed to get course overview for course run key: %s' % self.course_run.get('key'), 
+                    log.warning('Failed to get course overview for course run key: %s',
+                                self.course_run.get('key'),
                                 exec_info=True)
                 else:
                     self.enrollment_start = self.course_overview.enrollment_start or DEFAULT_ENROLLMENT_START_DATE
-                    
+
                     self._execute('_attach_course_run', course_run)
 
     def _attach_course_run_certificate_url(self, run_mode):
