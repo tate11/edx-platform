@@ -228,7 +228,7 @@ class MongoContentstoreBuilder(object):
         when the context closes.
         """
         contentstore = MongoContentStore(
-            db='contentstore{}'.format(random.randint(0, 10000)),
+            db='contentstore{}'.format(os.getpid()),
             collection='content',
             **COMMON_DOCSTORE_CONFIG
         )
@@ -286,7 +286,7 @@ class MongoModulestoreBuilder(StoreBuilderBase):
                 all of its assets.
         """
         doc_store_config = dict(
-            db='modulestore{}'.format(random.randint(0, 10000)),
+            db='modulestore{}'.format(os.getpid()),
             collection='xmodule',
             asset_collection='asset_metadata',
             **COMMON_DOCSTORE_CONFIG
@@ -334,7 +334,7 @@ class VersioningModulestoreBuilder(StoreBuilderBase):
                 all of its assets.
         """
         doc_store_config = dict(
-            db='modulestore{}'.format(random.randint(0, 10000)),
+            db='modulestore{}'.format(os.getpid()),
             collection='split_module',
             **COMMON_DOCSTORE_CONFIG
         )
