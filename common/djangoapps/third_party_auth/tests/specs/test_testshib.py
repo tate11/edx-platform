@@ -4,6 +4,7 @@ Third_party_auth integration tests using a mock version of the TestShib provider
 import datetime
 import json
 import logging
+import os
 import unittest
 from unittest import skip
 
@@ -25,7 +26,7 @@ from openedx.features.enterprise_support.tests.factories import EnterpriseCustom
 from third_party_auth import pipeline
 from third_party_auth.saml import SapSuccessFactorsIdentityProvider, log as saml_log
 from third_party_auth.tasks import fetch_saml_metadata
-from third_party_auth.tests import testutil
+from third_party_auth.tests import testutil, utils
 
 from .base import IntegrationTestMixin
 
@@ -124,10 +125,15 @@ class SamlIntegrationTestUtilities(object):
         """ Mocked: the user logs in to TestShib and then gets redirected back """
         # The SAML provider (TestShib) will authenticate the user, then get the browser to POST a response:
         self.assertTrue(provider_redirect_url.startswith(TESTSHIB_SSO_URL))
+
+        saml_response_xml = utils.read_and_pre_process_xml(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'testshib_saml_response.xml')
+        )
+
         return self.client.post(
             self.complete_url,
             content_type='application/x-www-form-urlencoded',
-            data=self.read_data_file('testshib_response.txt'),
+            data=utils.prepare_saml_response_from_xml(saml_response_xml),
         )
 
 
@@ -337,6 +343,58 @@ class TestShibIntegrationTest(SamlIntegrationTestUtilities, IntegrationTestMixin
         with freeze_time(later):
             # Test returning as a logged in user; this method verifies that we're logged out first.
             self._test_return_login(previous_session_timed_out=True)
+
+
+@ddt.ddt
+@unittest.skipUnless(testutil.AUTH_FEATURE_ENABLED, testutil.AUTH_FEATURES_KEY + ' not enabled')
+class TestShibIntegrationTest2(SamlIntegrationTestUtilities, IntegrationTestMixin, testutil.SAMLTestCase):
+    """
+    TestShib provider Integration Test, to test SAML functionality
+    """
+
+    TOKEN_RESPONSE_DATA = {
+        'access_token': 'access_token_value',
+        'expires_in': 'expires_in_value',
+    }
+    USER_RESPONSE_DATA = {
+        'lastName': 'lastName_value',
+        'id': 'id_value',
+        'firstName': 'firstName_value',
+        'idp_name': 'testshib',
+        'attributes': {u'urn:oid:0.9.2342.19200300.100.1.1': [u'myself']}
+    }
+
+    def do_provider_login(self, provider_redirect_url):
+        """ Mocked: the user logs in to TestShib and then gets redirected back """
+        # The SAML provider (TestShib) will authenticate the user, then get the browser to POST a response:
+        self.assertTrue(provider_redirect_url.startswith(TESTSHIB_SSO_URL))
+
+        saml_response_xml = utils.read_and_pre_process_xml(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'testshib_saml_response_missing_email.xml')
+        )
+
+        return self.client.post(
+            self.complete_url,
+            content_type='application/x-www-form-urlencoded',
+            data=utils.prepare_saml_response_from_xml(saml_response_xml),
+        )
+
+    def get_response_data(self):
+        """Gets dict (string -> object) of merged data about the user."""
+        response_data = dict(self.TOKEN_RESPONSE_DATA)
+        response_data.update(self.USER_RESPONSE_DATA)
+        return response_data
+
+    def get_username(self):
+        response_data = self.get_response_data()
+        return response_data.get('idp_name')
+
+    def test_register_with_defaults(self):
+        """ Configure TestShib before running the register test """
+
+        self._configure_testshib_provider(default_email='default@testshib.org')
+        self.USER_EMAIL = "default@testshib.org"
+        self._test_register()
 
 
 @unittest.skipUnless(testutil.AUTH_FEATURE_ENABLED, testutil.AUTH_FEATURES_KEY + ' not enabled')

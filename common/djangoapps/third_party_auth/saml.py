@@ -254,12 +254,12 @@ class SapSuccessFactorsIdentityProvider(EdXSAMLIdentityProvider):
     }
 
     defaults_value_mapping = {
-            'defaultFullName': 'attr_full_name',
-            'firstName': 'attr_first_name',
-            'lastName': 'attr_last_name',
-            'username': 'attr_username',
-            'email': 'attr_email',
-        }
+        'defaultFullName': 'attr_full_name',
+        'firstName': 'attr_first_name',
+        'lastName': 'attr_last_name',
+        'username': 'attr_username',
+        'email': 'attr_email',
+    }
 
     # Define a simple mapping to relate SAPSF values to Open edX-compatible values for
     # any given field. By default, this only contains the Country field, as SAPSF supplies
