@@ -345,58 +345,6 @@ class TestShibIntegrationTest(SamlIntegrationTestUtilities, IntegrationTestMixin
             self._test_return_login(previous_session_timed_out=True)
 
 
-@ddt.ddt
-@unittest.skipUnless(testutil.AUTH_FEATURE_ENABLED, testutil.AUTH_FEATURES_KEY + ' not enabled')
-class TestShibIntegrationTest2(SamlIntegrationTestUtilities, IntegrationTestMixin, testutil.SAMLTestCase):
-    """
-    TestShib provider Integration Test, to test SAML functionality
-    """
-
-    TOKEN_RESPONSE_DATA = {
-        'access_token': 'access_token_value',
-        'expires_in': 'expires_in_value',
-    }
-    USER_RESPONSE_DATA = {
-        'lastName': 'lastName_value',
-        'id': 'id_value',
-        'firstName': 'firstName_value',
-        'idp_name': 'testshib',
-        'attributes': {u'urn:oid:0.9.2342.19200300.100.1.1': [u'myself']}
-    }
-
-    def do_provider_login(self, provider_redirect_url):
-        """ Mocked: the user logs in to TestShib and then gets redirected back """
-        # The SAML provider (TestShib) will authenticate the user, then get the browser to POST a response:
-        self.assertTrue(provider_redirect_url.startswith(TESTSHIB_SSO_URL))
-
-        saml_response_xml = utils.read_and_pre_process_xml(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'testshib_saml_response_missing_email.xml')
-        )
-
-        return self.client.post(
-            self.complete_url,
-            content_type='application/x-www-form-urlencoded',
-            data=utils.prepare_saml_response_from_xml(saml_response_xml),
-        )
-
-    def get_response_data(self):
-        """Gets dict (string -> object) of merged data about the user."""
-        response_data = dict(self.TOKEN_RESPONSE_DATA)
-        response_data.update(self.USER_RESPONSE_DATA)
-        return response_data
-
-    def get_username(self):
-        response_data = self.get_response_data()
-        return response_data.get('idp_name')
-
-    def test_register_with_defaults(self):
-        """ Configure TestShib before running the register test """
-
-        self._configure_testshib_provider(default_email='default@testshib.org')
-        self.USER_EMAIL = "default@testshib.org"
-        self._test_register()
-
-
 @unittest.skipUnless(testutil.AUTH_FEATURE_ENABLED, testutil.AUTH_FEATURES_KEY + ' not enabled')
 class SuccessFactorsIntegrationTest(SamlIntegrationTestUtilities, IntegrationTestMixin, testutil.SAMLTestCase):
     """
